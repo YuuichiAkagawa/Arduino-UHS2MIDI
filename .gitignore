@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+
+# Backup files
+*.bak
+
+# macOS
+examples/.DS_Store
+.DS_Store
