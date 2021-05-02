@@ -11,17 +11,21 @@ copy it in "libraries" directory.
 ### Basic / Default
 ```cpp
 #include <UHS2-MIDI.h>
-USB Usb;
 ...
+USB Usb;
 UHS2MIDI_CREATE_DEFAULT_INSTANCE(&Usb);
 ...
 void setup()
 {
-   MIDI.begin();
+  MIDI.begin();
+  if (Usb.Init() == -1) {
+    while (1); //halt
+  }//if (Usb.Init() == -1...
 ...
 void loop()
 {
-   MIDI.read();
+  Usb.Task();
+  MIDI.read();
 ```
 will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and is by default connected to cable number 0 - and listens to incoming MIDI on channel 1.
 
@@ -29,7 +33,8 @@ will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and 
 ```cpp
 #include <UHS2-MIDI.h>
 ...
-USBMIDI_CREATE_INSTANCE(&Usb, 4, MIDI);
+USB Usb;
+UHS2MIDI_CREATE_INSTANCE(&Usb, 4, MIDI);
 ```
 will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and is connected to cable number 4.
 
@@ -37,6 +42,7 @@ will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and 
 ```cpp
 #include <UHS2-MIDI.h>
 ...
+USB Usb;
 UHS2MIDI_NAMESPACE::uhs2MidiTransport uhs2MIDI2(&Usb, 5);
 MIDI_NAMESPACE::MidiInterface<UHS2MIDI_NAMESPACE::uhs2MidiTransport> MIDI2((UHS2MIDI_NAMESPACE::uhs2MidiTransport&)uhs2MIDI2);
 ```
@@ -45,11 +51,10 @@ will create a instance named `uhs2MIDI2` (and underlaying MIDI object `MIDI2`) a
 ## Tested boards / modules
 - Arduino UNO
 
-
-
 ## Other Transport protocols:
 The libraries below  the same calling mechanism (API), making it easy to interchange the transport layer.
 - [Arduino USB-MIDI  Transport](https://github.com/lathoub/USB-MIDI)
 - [Arduino AppleMIDI Transport](https://github.com/lathoub/Arduino-AppleMIDI-Library)
 - [Arduino ipMIDI  Transport](https://github.com/lathoub/Arduino-ipMIDI)
 - [Arduino BLE-MIDI  Transport](https://github.com/lathoub/Arduino-BLE-MIDI)
+- [Arduino USB Host Library SAMD MIDI Transport](https://github.com/YuuichiAkagawa/Arduino-USBHSAMD-MIDI)

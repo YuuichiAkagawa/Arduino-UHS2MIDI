@@ -24,16 +24,13 @@ SOFTWARE.
  * Original version: https://github.com/lathoub/Arduino-USBMIDI/blob/master/src/USB-MIDI.h
  *
  * Modified for the USB Host Shield 2.0 + USBH_MIDI
- * copyright (c) 2020 Yuuichi Akagawa
+ * copyright (c) 2020-2021 Yuuichi Akagawa
  *******************************************************************************
  */
- 
-
 #pragma once
 
 #include <MIDI.h>
 #include <usbh_midi.h>
-
 
 #include "UHS2-MIDI_defs.h"
 #include "UHS2-MIDI_Namespace.h"
@@ -42,15 +39,13 @@ BEGIN_UHS2MIDI_NAMESPACE
 class uhs2MidiTransport : public USBH_MIDI
 {
 private:
-    byte mTxBuffer[4];
-    size_t mTxIndex;
+    uint8_t mTxIndex;
     MidiType mTxStatus;
+    usbMidiEventPacket_t mTxPacket;
+    uint8_t mRxLength;
+    uint8_t mRxIndex;
+    usbMidiEventPacket_t mRxPacket;
 
-    byte mRxBuffer[4];
-    size_t mRxLength;
-    size_t mRxIndex;
-
-    usbMidiEventPacket_t mPacket;
     uint8_t cableNumber;
 
 public:
@@ -61,19 +56,18 @@ public:
 
     static const bool thruActivated = false;
 
-    uint8_t uhs2MidiTransport::SendData(usbMidiEventPacket_t packet){
+    uint8_t SendData(usbMidiEventPacket_t &packet){
         if( !bPollEnable ) return 4;
-        return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, 4, packet.buf);
+        return USBH_MIDI::SendRawData(4, packet.buf);
     };
 
-    usbMidiEventPacket_t uhs2MidiTransport::RecvData(){
-      usbMidiEventPacket_t packet;
-      if ( USBH_MIDI::RecvData(packet.buf, true) == 0 ) {
+    uint8_t RecvData(usbMidiEventPacket_t &packet){
+      uint8_t rc = USBH_MIDI::RecvData(packet.buf, true);
+      if( rc == 0 ) {
         packet.p.header = 0;
       }
-      return packet;
+      return rc;
     };
-
 
     void begin()
     {
@@ -89,16 +83,16 @@ public:
       byte cin = 0;
       if (status < SystemExclusive) {
         // Non System messages
-        cin = type2cin[((status & 0xF0) >> 4) - 7][1];
-        mPacket.p.header = MAKEHEADER(cableNumber, cin);
+        cin = ((status & 0xF0) >> 4);
+        mTxPacket.p.header = MAKEHEADER(cableNumber, cin);
       }
       else {
         // Only System messages
-        cin = system2cin[status & 0x0F][1];
-        mPacket.p.header = MAKEHEADER(cableNumber, 0x04);
+        cin = pgm_read_byte_near(Fsys2cin + (status & 0x0F));
+        mTxPacket.p.header = MAKEHEADER(cableNumber, cin);
       }
 
-      mPacket.p.byte1 = mPacket.p.byte2 = mPacket.p.byte3  = 0;
+      mTxPacket.p.byte1 = mTxPacket.p.byte2 = mTxPacket.p.byte3  = 0;
       mTxIndex = 0;
 
       return true;
@@ -107,43 +101,47 @@ public:
     void write(byte byte)
     {
       if (mTxStatus != MidiType::SystemExclusive) {
-        if (mTxIndex == 0)      mPacket.p.byte1 = byte;
-        else if (mTxIndex == 1) mPacket.p.byte2 = byte;
-        else if (mTxIndex == 2) mPacket.p.byte3 = byte;
+        mTxPacket.buf[mTxIndex+1] = byte;
       }
       else if (byte == MidiType::SystemExclusiveStart) {
-        mPacket.p.header = MAKEHEADER(cableNumber, 0x04);
-        mPacket.p.byte1 = byte;
+        mTxPacket.p.header = MAKEHEADER(cableNumber, 0x04);
+        mTxPacket.p.byte1 = byte;
       }
       else // SystemExclusiveEnd or SysEx data
       {
-        auto i = mTxIndex % 3;
         if (byte == MidiType::SystemExclusiveEnd)
-          mPacket.p.header = MAKEHEADER(cableNumber, (0x05 + i));
+          mTxPacket.p.header = MAKEHEADER(cableNumber, (0x05 + mTxIndex));
 
-        if (i == 0) {
-          mPacket.p.byte1 = byte; mPacket.p.byte2 = mPacket.p.byte3 = 0x00;
-        }
-        else if (i == 1) {
-          mPacket.p.byte2 = byte; mPacket.p.byte3 = 0x00;
-        }
-        else if (i == 2) {
-          mPacket.p.byte3 = byte;
-          if (byte != MidiType::SystemExclusiveEnd)
-            SendData(mPacket);
+        switch(mTxIndex){
+          case 0:
+            mTxPacket.p.byte1 = byte;
+            mTxPacket.p.byte2 = mTxPacket.p.byte3 = 0x00;
+            break;
+          case 1:
+            mTxPacket.p.byte2 = byte;
+            mTxPacket.p.byte3 = 0x00;
+            break;
+          case 2:
+            mTxPacket.p.byte3 = byte;
+            if (byte != MidiType::SystemExclusiveEnd)
+              SendData(mTxPacket);
+            break;
+          default:
+            break;
         }
       }
-      mTxIndex++;
+      mTxIndex = (mTxIndex == 2) ? 0 : mTxIndex+1;
     };
 
     void endTransmission()
     {
-      SendData(mPacket);
+      SendData(mTxPacket);
     };
 
     byte read()
     {
-      RXBUFFER_POPFRONT(byte);
+      auto byte = mRxPacket.buf[mRxIndex++];
+      mRxLength--;
       return byte;
     };
 
@@ -153,43 +151,18 @@ public:
       if (mRxLength > 0)
         return mRxLength;
 
-      mRxIndex = 0;
-
-      mPacket = RecvData();
-      if (mPacket.p.header != 0) {
-        auto cn  = GETCABLENUMBER(mPacket);
+      mRxIndex = 1;
+      auto len = (size_t)RecvData(mRxPacket);
+      if (mRxPacket.p.header != 0) {
+        //auto cn  = GETCABLENUMBER(mRxPacket);
+        auto cn = (mRxPacket.p.header >> 4) & 0x0f;
         if (cn != cableNumber)
           return 0;
-
-        auto cin = GETCIN(mPacket);
-        auto len = cin2Len[cin][1];
-        switch (len) {
-          case 0:
-            if (cin == 0x4 || cin == 0x7)
-              RXBUFFER_PUSHBACK3
-              else if (cin == 0x5)
-                RXBUFFER_PUSHBACK1
-                else if (cin == 0x6)
-                  RXBUFFER_PUSHBACK2
-                  break;
-          case 1:
-            RXBUFFER_PUSHBACK1
-            break;
-          case 2:
-            RXBUFFER_PUSHBACK2
-            break;
-          case 3:
-            RXBUFFER_PUSHBACK3
-            break;
-          default:
-            break; // error
-        }
+        mRxLength = len;
       }
-
       return mRxLength;
     };
 };
-
 
 END_UHS2MIDI_NAMESPACE
 

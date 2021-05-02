@@ -1,7 +1,7 @@
 #include <UHS2-MIDI.h>
-//#include <usbhub.h>
-USB Usb;
 
+
+USB Usb;
 UHS2MIDI_CREATE_DEFAULT_INSTANCE(&Usb);
 
 // -----------------------------------------------------------------------------
@@ -13,47 +13,47 @@ UHS2MIDI_CREATE_DEFAULT_INSTANCE(&Usb);
 
 void handleNoteOn(byte channel, byte pitch, byte velocity)
 {
-    // Do whatever you want when a note is pressed.
+  // Do whatever you want when a note is pressed.
 
-    // Try to keep your callbacks short (no delays ect)
-    // otherwise it would slow down the loop() and have a bad impact
-    // on real-time performance.
+  // Try to keep your callbacks short (no delays ect)
+  // otherwise it would slow down the loop() and have a bad impact
+  // on real-time performance.
 }
 
 void handleNoteOff(byte channel, byte pitch, byte velocity)
 {
-    // Do something when the note is released.
-    // Note that NoteOn messages with 0 velocity are interpreted as NoteOffs.
+  // Do something when the note is released.
+  // Note that NoteOn messages with 0 velocity are interpreted as NoteOffs.
 }
 
 // -----------------------------------------------------------------------------
 
 void setup()
 {
-    // Connect the handleNoteOn function to the library,
-    // so it is called upon reception of a NoteOn.
-    MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
+  // Connect the handleNoteOn function to the library,
+  // so it is called upon reception of a NoteOn.
+  MIDI.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
 
-    // Do the same for NoteOffs
-    MIDI.setHandleNoteOff(handleNoteOff);
+  // Do the same for NoteOffs
+  MIDI.setHandleNoteOff(handleNoteOff);
 
-    // Initiate MIDI communications, listen to all channels
-    MIDI.begin(MIDI_CHANNEL_OMNI);
+  // Initiate MIDI communications, listen to all channels
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 
-    if (Usb.Init() == -1) {
-      while (1); //halt
-    }//if (Usb.Init() == -1...
-    delay( 200 );
+  if (Usb.Init() == -1) {
+    while (1); //halt
+  }//if (Usb.Init() == -1...
+  delay( 200 );
 }
 
 void loop()
 {
-    Usb.Task();
-    // Call MIDI.read the fastest you can for real-time performance.
-    MIDI.read();
+  Usb.Task();
+  // Call MIDI.read the fastest you can for real-time performance.
+  MIDI.read();
 
-    // There is no need to check if there are messages incoming
-    // if they are bound to a Callback function.
-    // The attached method will be called automatically
-    // when the corresponding message has been received.
+  // There is no need to check if there are messages incoming
+  // if they are bound to a Callback function.
+  // The attached method will be called automatically
+  // when the corresponding message has been received.
 }
