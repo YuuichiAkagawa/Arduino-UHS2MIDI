@@ -172,3 +172,7 @@ END_UHS2MIDI_NAMESPACE
 
 #define UHS2MIDI_CREATE_DEFAULT_INSTANCE(USBH)  \
   UHS2MIDI_CREATE_INSTANCE(USBH, 0, MIDI)
+
+#define UHS2MIDI_CREATE_CUSTOM_INSTANCE(USBH, CableNr, Name, Settings)  \
+  UHS2MIDI_NAMESPACE::uhs2MidiTransport __uhs2##Name(USBH, CableNr);\
+  MIDI_NAMESPACE::MidiInterface<UHS2MIDI_NAMESPACE::uhs2MidiTransport, Settings > Name((UHS2MIDI_NAMESPACE::uhs2MidiTransport&)__uhs2##Name);

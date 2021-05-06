@@ -17,15 +17,17 @@ UHS2MIDI_CREATE_DEFAULT_INSTANCE(&Usb);
 ...
 void setup()
 {
-  MIDI.begin();
+  MIDI.begin(1);
   if (Usb.Init() == -1) {
     while (1); //halt
   }//if (Usb.Init() == -1...
-...
+  ...
+}
 void loop()
 {
   Usb.Task();
   MIDI.read();
+  ...
 ```
 will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and is by default connected to cable number 0 - and listens to incoming MIDI on channel 1.
 
@@ -38,6 +40,18 @@ UHS2MIDI_CREATE_INSTANCE(&Usb, 4, MIDI);
 ```
 will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and is connected to cable number 4.
 
+### Custom Settings
+```cpp
+#include <UHS2-MIDI.h>
+...
+struct MySettings : public midi::DefaultSettings
+{
+    static const unsigned SysExMaxSize = 512; // Accept SysEx messages up to 512 bytes long.
+};
+USB Usb;
+UHS2MIDI_CREATE_CUSTOM_INSTANCE(&Usb, 0, MIDI, MySettings);
+```
+will create a instance named `MIDI` (transport instance named `__uhs2MIDI`) and change the maximum size of SysEx messages to 512 bytes.
 ### Advanced
 ```cpp
 #include <UHS2-MIDI.h>
