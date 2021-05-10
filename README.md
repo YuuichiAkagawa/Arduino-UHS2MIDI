@@ -1,8 +1,10 @@
 # Arduino USB Host Shield 2.0 MIDI Transport
-Pre-release of USB Host Shield 2.0  MIDI transport layer for the [FortySevenEffects Arduino MIDI Library](https://github.com/FortySevenEffects/arduino_midi_library) and uses the underlying [USB Host Shield 2.0](https://github.com/felis/USB_Host_Shield_2.0) library.
-This library is based on the [Arduino-USBMIDI](https://github.com/lathoub/Arduino-USBMIDI).
+[![Check Arduino status](https://github.com/YuuichiAkagawa/Arduino-UHS2MIDI/actions/workflows/check-arduino.yml/badge.svg)](https://github.com/YuuichiAkagawa/Arduino-UHS2MIDI/actions/workflows/check-arduino.yml")
+[![GitHub release](https://img.shields.io/github/release/YuuichiAkagawa/Arduino-UHS2MIDI.svg?maxAge=3600)](https://github.com/YuuichiAkagawa/Arduino-UHS2MIDI/releases/latest)
+[![License](https://img.shields.io/github/license/YuuichiAkagawa/Arduino-UHS2MIDI.svg?maxAge=3600)](LICENSE)
 
-__This libraries is EXTREMELY ALPHA!__
+USB Host Shield 2.0  MIDI transport layer for the [FortySevenEffects Arduino MIDI Library](https://github.com/FortySevenEffects/arduino_midi_library) and uses the underlying [USB Host Shield 2.0](https://github.com/felis/USB_Host_Shield_2.0) library.  
+This library is based on the [Arduino-USBMIDI](https://github.com/lathoub/Arduino-USBMIDI).
 
 ## Installation
 copy it in "libraries" directory.
