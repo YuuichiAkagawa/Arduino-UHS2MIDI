@@ -65,8 +65,22 @@ MIDI_NAMESPACE::MidiInterface<UHS2MIDI_NAMESPACE::uhs2MidiTransport> MIDI2((UHS2
 ```
 will create a instance named `uhs2MIDI2` (and underlaying MIDI object `MIDI2`) and is by default connected to cable number 5.
 
+### Change CableNumber
+```cpp
+#include <UHS2-MIDI.h>
+...
+USB Usb;
+UHS2MIDI_CREATE_DEFAULT_INSTANCE(&Usb);
+void setup()
+{
+  MIDI.begin(4);                            // Launch MIDI and listen to channel 4
+  MIDI.getTransport()->setCableNumber(1);   // Change CableNumber to 1 later
+```
 ## Tested boards / modules
-- Arduino UNO
+- Arduino UNO R3
+
+## Changelog
+[Chagelog](/Changelog.md)
 
 ## Other Transport protocols:
 The libraries below  the same calling mechanism (API), making it easy to interchange the transport layer.

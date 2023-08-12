@@ -24,7 +24,7 @@ SOFTWARE.
  * Original version: https://github.com/lathoub/Arduino-USBMIDI/blob/master/src/USB-MIDI.h
  *
  * Modified for the USB Host Shield 2.0 + USBH_MIDI
- * copyright (c) 2020-2021 Yuuichi Akagawa
+ * copyright (c) 2020-2023 Yuuichi Akagawa
  *******************************************************************************
  */
 #pragma once
@@ -34,6 +34,8 @@ SOFTWARE.
 
 #include "UHS2-MIDI_defs.h"
 #include "UHS2-MIDI_Namespace.h"
+
+#define UHS2_MIDI_VERSION 10001
 
 BEGIN_UHS2MIDI_NAMESPACE
 class uhs2MidiTransport : public USBH_MIDI
@@ -161,6 +163,12 @@ public:
         mRxLength = len;
       }
       return mRxLength;
+    };
+
+    void setCableNumber(uint8_t cn){
+        if( cn > 15 )
+            return;
+        cableNumber = cn;
     };
 };
 
